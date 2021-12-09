@@ -49,11 +49,9 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
                            settings=wandb.Settings(start_method="fork"))
     # create WanDB callback
     wandb_callback = WandbCallback()
-    model.config.num_labels = model_args.labels_num
     # create early stopping callback
     print("number of labels: %d" % model_args.labels_num)
     print("number of labels: %d" % model.config.num_labels)
-
 
     # set the output directory to the run-specific directory to store the models there
     training_args.output_dir = split_dir
@@ -164,7 +162,8 @@ if __name__ == '__main__':
         model = RobertaWithFeats(roberta_config=config)
     else:
         # use a normal seq classification model without features
-        model = AutoModelForSequenceClassification.from_pretrained(model_args.model_name_or_path)
+        model = AutoModelForSequenceClassification.from_pretrained(model_args.model_name_or_path,
+                                                                   num_labels=model_args.labels_num)
     print("loaded model of type %s" % str(type(model)))
     dev_reports = []
     test_reports = []
