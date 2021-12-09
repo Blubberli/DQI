@@ -13,6 +13,7 @@ from transformers import RobertaConfig
 from data import EuropolisDataset
 import pandas as pd
 import numpy as np
+from evaluation import average_all, average_class
 
 # set seed to 42 for reproducibility
 set_seed(42)
@@ -72,8 +73,6 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
     dev_results = trainer.evaluate(dev_data)
     # evaluate on test set
     test_result = trainer.evaluate(test_data)
-
-    @
 
     dev_report = dev_results["eval_report"]
     test_report = test_result["eval_report"]
@@ -143,7 +142,8 @@ if __name__ == '__main__':
     else:
         # use a normal seq classification model without features
         model = AutoModelForSequenceClassification.from_pretrained(model_args.model_name_or_path)
-
+    dev_reports = []
+    test_reports = []
     for i in range(0, 5):
         # create a training, dev and test dataset
         train = EuropolisDataset(path_to_dataset=data_args.data_dir + "/split%i/train.csv" % i,
@@ -160,3 +160,19 @@ if __name__ == '__main__':
                                                            model_args=model_args,
                                                            training_args=training_args,
                                                            fold_id=str(i), test_csv=test.dataset)
+        dev_reports.append(dev_results)
+        test_reports.append(test_results)
+    # get average results for the 5 splits
+    average_dev = average_all(dev_reports)
+    average_test = average_all(test_reports)
+    class_average_dev = average_class(dev_reports)
+    class_average_test = average_class(test_reports)
+    # write them to file in the global dir
+    with open(training_args.output_dir + "/average_dev.csv", "w") as f:
+        f.write(average_dev)
+    with open(training_args.output_dir + "/average_test.csv", "w") as f:
+        f.write(average_test)
+    with open(training_args.output_dir + "/average_class_dev.csv", "w") as f:
+        f.write(class_average_dev)
+    with open(training_args.output_dir + "/average_class_test.csv", "w") as f:
+        f.write(class_average_test)
