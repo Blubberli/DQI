@@ -49,6 +49,7 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
                            settings=wandb.Settings(start_method="fork"))
     # create WanDB callback
     wandb_callback = WandbCallback()
+    model.config.num_labels = model_args.labels_num
     # create early stopping callback
     print("number of labels: %d" % model_args.labels_num)
     print("number of labels: %d" % model.config.num_labels)
