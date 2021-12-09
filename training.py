@@ -11,10 +11,8 @@ import torch.nn.functional as F
 from seq_with_feats import RobertaWithFeats
 from transformers import RobertaConfig
 from data import EuropolisDataset
+import pandas as pd
 import numpy as np
-
-# from pytorch_lightning.callbacks import ModelCheckpoint
-# from pytorch_lightning.trainer import Trainer
 
 # set seed to 42 for reproducibility
 set_seed(42)
@@ -72,17 +70,25 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
 
     # evaluate on dev set
     dev_results = trainer.evaluate(dev_data)
-
+    # evaluate on test set
     test_result = trainer.evaluate(test_data)
+
+    @
+
     dev_report = dev_results["eval_report"]
     test_report = test_result["eval_report"]
+    train_report = train_results["eval_report"]
 
     wandb_run.finish()
     prediction_output = trainer.predict(test_data)
-    #            probs = F.softmax(out, dim=-1)
 
+    # generate probabilities over classes and save the test data with predictions as a dataframe into split directory
     test_csv['predictions'] = F.softmax(torch.tensor(prediction_output.predictions), dim=-1).tolist()
     test_csv.to_csv(f'{str(split_dir)}/test_df_with_predictions.csv', index=False, sep="\t")
+    # save classification report for training,  validation and test set in split directory
+    pd.DataFrame.from_dict(train_report).to_csv(f'{str(split_dir)}/train_report.csv', index=False, sep="\t")
+    pd.DataFrame.from_dict(dev_report).to_csv(f'{str(split_dir)}/dev_report.csv', index=False, sep="\t")
+    pd.DataFrame.from_dict(test_report).to_csv(f'{str(split_dir)}/test_report.csv', index=False, sep="\t")
     training_args.output_dir = general_dir
 
     return dev_results, test_result
@@ -93,7 +99,7 @@ def compute_metrics(pred: EvalPrediction):
     preds = np.argmax(pred.predictions, axis=1).flatten()
     precision, recall, macro_f1, _ = precision_recall_fscore_support(y_true=labels, y_pred=preds, average='macro')
     accuracy = accuracy_score(y_true=labels, y_pred=preds)
-    report = classification_report(y_true=labels, y_pred=preds)
+    report = classification_report(y_true=labels, y_pred=preds, output_dict=True)
     results = {
         'accuracy': accuracy,
         'macro_f1': macro_f1,
@@ -153,4 +159,4 @@ if __name__ == '__main__':
                                                            data_args=data_args,
                                                            model_args=model_args,
                                                            training_args=training_args,
-                                                           fold_id=str(i), test_csv=test)
+                                                           fold_id=str(i), test_csv=test.dataset)
