@@ -85,9 +85,9 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
 
     # generate probabilities over classes and save the test data with predictions as a dataframe into split directory
     dev_data.dataset['predictions'] = F.softmax(torch.tensor(dev_predictions.predictions), dim=-1).tolist()
-    dev_data.to_csv(f'{str(split_dir)}/dev_df_with_predictions.csv', index=False, sep="\t")
+    dev_data.dataset.to_csv(f'{str(split_dir)}/dev_df_with_predictions.csv', index=False, sep="\t")
     test_data.dataset['predictions'] = F.softmax(torch.tensor(test_predictions.predictions), dim=-1).tolist()
-    test_data.to_csv(f'{str(split_dir)}/test_df_with_predictions.csv', index=False, sep="\t")
+    test_data.dataset.to_csv(f'{str(split_dir)}/test_df_with_predictions.csv', index=False, sep="\t")
     # save classification report for training,  validation and test set in split directory
 
     train_results["eval_report_csv"].to_csv(f'{str(split_dir)}/train_report.csv', index=False, sep="\t")
