@@ -57,11 +57,7 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
 
     # set the output directory to the run-specific directory to store the models there
     training_args.output_dir = split_dir
-    # drop last training instance if we would end up having a one-sized batch
-    # this can be removed if we are using a standard model (unadapted)
-    droplast = False
-    if len(train_data) % training_args.per_device_train_batch_size == 1:
-        droplast = True
+
     trainer = Trainer(
         model=model,
         args=training_args,
