@@ -1,7 +1,7 @@
 import torch
 import wandb
 from pathlib import Path
-from logging import get_name_with_hyperparams, reset_wandb_env
+from utils import get_name_with_hyperparams, reset_wandb_env
 from args import parse_arguments
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, EvalPrediction, Trainer
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, classification_report
