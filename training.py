@@ -52,7 +52,6 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
     early_stopping_callback = EarlyStoppingCallback(early_stopping_patience=3, early_stopping_threshold=0.01)
     # create early stopping callback
     print("number of labels: %d" % model_args.labels_num)
-    print("number of labels: %d" % model.config.num_labels)
 
     # set the output directory to the run-specific directory to store the models there
     training_args.output_dir = split_dir
@@ -170,7 +169,6 @@ if __name__ == '__main__':
     test_reports = []
     for i in range(0, 5):
         train, dev, test = get_datasets(use_feats=model_args.use_feats, data_args=data_args, i=i)
-        print("unique labels %d" % len(set(train.labels)))
         dev_results, test_results = run_train_with_trainer(train_data=train,
                                                            test_data=dev,
                                                            dev_data=test,

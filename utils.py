@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+
 
 def reset_wandb_env():
     print('resetting wandb env')
@@ -14,12 +16,14 @@ def reset_wandb_env():
     # force no watching. seems to have been reset somehow. makes saving slower
     os.environ['WANDB_WATCH'] = 'false'
 
+
 def get_name_with_hyperparams(data_args, training_args, model_args, fold_id):
     group = ((training_args.output_dir_prefix +
               f"-seqlen{data_args.max_seq_length}"
               f"-batchsize{training_args.per_device_train_batch_size}"
               f"-model{model_args.model_name_or_path}"
               f"f-quality{data_args.quality_dim}"
-              f"-lr{training_args.learning_rate}"))
+              f"-lr{training_args.learning_rate}"
+              f"-time{datetime.now().strftime('%Y%m%d%H%M%S')}"))
     run_name = group + (f"-fold{fold_id}")
     return group, run_name
