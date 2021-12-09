@@ -10,7 +10,7 @@ from transformers.integrations import WandbCallback
 import torch.nn.functional as F
 from seq_with_feats import RobertaWithFeats
 from transformers import RobertaConfig
-from data import EuropolisDataset
+from data import EuropolisDataset, EuropolisDatasetFeats
 import pandas as pd
 import numpy as np
 from evaluation import average_all, average_class
@@ -115,6 +115,25 @@ def save_results(output_dir, report, filename):
     print("results saved in %s" % filename)
 
 
+def get_datasets(use_feats, data_args, i):
+    if use_feats:
+        # create a training, dev and test dataset
+        train = EuropolisDatasetFeats(path_to_dataset=data_args.data_dir + "/split%i/train.csv" % i,
+                                      label=data_args.quality_dim, tokenizer=tokenizer, text_col=data_args.text_col)
+        dev = EuropolisDatasetFeats(path_to_dataset=data_args.data_dir + "/split%i/val.csv" % i,
+                                    label=data_args.quality_dim, tokenizer=tokenizer, text_col=data_args.text_col)
+        test = EuropolisDatasetFeats(path_to_dataset=data_args.data_dir + "/split%i/test.csv" % i,
+                                     label=data_args.quality_dim, tokenizer=tokenizer, text_col=data_args.text_col)
+    else:
+        train = EuropolisDataset(path_to_dataset=data_args.data_dir + "/split%i/train.csv" % i,
+                                 label=data_args.quality_dim, tokenizer=tokenizer, text_col=data_args.text_col)
+        dev = EuropolisDataset(path_to_dataset=data_args.data_dir + "/split%i/val.csv" % i,
+                               label=data_args.quality_dim, tokenizer=tokenizer, text_col=data_args.text_col)
+        test = EuropolisDataset(path_to_dataset=data_args.data_dir + "/split%i/test.csv" % i,
+                                label=data_args.quality_dim, tokenizer=tokenizer, text_col=data_args.text_col)
+    return train, dev, test
+
+
 if __name__ == '__main__':
     # read in arguments
     # model args: all classification details
@@ -145,14 +164,7 @@ if __name__ == '__main__':
     dev_reports = []
     test_reports = []
     for i in range(0, 5):
-        # create a training, dev and test dataset
-        train = EuropolisDataset(path_to_dataset=data_args.data_dir + "/split%i/train.csv" % i,
-                                 label=data_args.quality_dim, tokenizer=tokenizer, text_col=data_args.text_col)
-        dev = EuropolisDataset(path_to_dataset=data_args.data_dir + "/split%i/val.csv" % i,
-                               label=data_args.quality_dim, tokenizer=tokenizer, text_col=data_args.text_col)
-        test = EuropolisDataset(path_to_dataset=data_args.data_dir + "/split%i/test.csv" % i,
-                                label=data_args.quality_dim, tokenizer=tokenizer, text_col=data_args.text_col)
-
+        train, dev, test = get_datasets(use_feats=model_args.use_feats, data_args=data_args, i=i)
         dev_results, test_results = run_train_with_trainer(train_data=train,
                                                            test_data=dev,
                                                            dev_data=test,
