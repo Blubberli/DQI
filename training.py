@@ -68,7 +68,6 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
         train_dataset=train_data,
         eval_dataset=dev_data,
         compute_metrics=compute_metrics,
-        drop_last=droplast,
         callbacks=[wandb_callback, early_stopping_callback]
     )
 
