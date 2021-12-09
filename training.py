@@ -9,7 +9,7 @@ from transformers import set_seed
 from transformers.integrations import WandbCallback
 import torch.nn.functional as F
 from seq_with_feats import RobertaWithFeats
-from transformers import RobertaConfig
+from transformers import RobertaConfig, EarlyStoppingCallback
 from data import EuropolisDataset, EuropolisDatasetFeats
 import pandas as pd
 import numpy as np
@@ -49,6 +49,7 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
                            settings=wandb.Settings(start_method="fork"))
     # create WanDB callback
     wandb_callback = WandbCallback()
+    early_stopping_callback = EarlyStoppingCallback(early_stopping_patience=3, early_stopping_threshold=0.01)
     # create early stopping callback
     print("number of labels: %d" % model_args.labels_num)
     print("number of labels: %d" % model.config.num_labels)
@@ -61,7 +62,7 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
         train_dataset=train_data,
         eval_dataset=dev_data,
         compute_metrics=compute_metrics,
-        callbacks=[wandb_callback]
+        callbacks=[wandb_callback, early_stopping_callback]
     )
 
     initial_train_results = trainer.evaluate(train_data)
