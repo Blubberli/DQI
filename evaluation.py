@@ -10,7 +10,7 @@ def average_all(reports):
             all_vals = [report[m] for report in reports]
         else:
             all_vals = [report['macro avg'][m] for report in reports]
-        s += "%s\t%.2f\t%.2f\n" % (m, statistics.geometric_mean(all_vals), statistics.stdev(all_vals))
+        s += "%s\t%.2f\t%.2f\n" % (m, statistics.mean(all_vals), statistics.stdev(all_vals))
     return s
 
 
