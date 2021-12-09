@@ -23,7 +23,6 @@ def get_name_with_hyperparams(data_args, training_args, model_args, fold_id):
               f"-batchsize{training_args.per_device_train_batch_size}"
               f"-model{model_args.model_name_or_path}"
               f"f-quality{data_args.quality_dim}"
-              f"-lr{training_args.learning_rate}"
-              f"-time{datetime.now().strftime('%Y%m%d%H%M%S')}"))
-    run_name = group + (f"-fold{fold_id}")
+              f"-lr{training_args.learning_rate}"))
+    run_name = group + (f"-fold{fold_id}" + f"-time{datetime.now().strftime('%Y%m%d%H%M%S')}")
     return group, run_name
