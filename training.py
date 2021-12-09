@@ -11,7 +11,6 @@ import torch.nn.functional as F
 from seq_with_feats import RobertaWithFeats
 from transformers import RobertaConfig, EarlyStoppingCallback
 from data import EuropolisDataset, EuropolisDatasetFeats
-import pandas as pd
 import numpy as np
 from evaluation import average_all, average_class
 import os
@@ -30,7 +29,7 @@ else:
 
 
 def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_args, training_args,
-                           fold_id, test_csv):
+                           fold_id):
     # initialize classification model
     # general = name with important hyperparams
     # split_run_name = adding the split ID to the name
@@ -67,8 +66,6 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
         callbacks=[wandb_callback, early_stopping_callback]
     )
 
-    initial_train_results = trainer.evaluate(train_data)
-
     # train with trainer
     trainer.train()
 
@@ -77,22 +74,25 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
     # evaluate on dev set
     dev_results = trainer.evaluate(dev_data)
     # evaluate on test set
-    test_result = trainer.evaluate(test_data)
+    test_results = trainer.evaluate(test_data)
 
-    dev_report = dev_results["eval_report"]
-    test_report = test_result["eval_report"]
-    train_report = train_results["eval_report"]
+    dev_report = dev_results["eval_report_dict"]
+    test_report = test_results["eval_report_dict"]
 
     wandb_run.finish()
-    prediction_output = trainer.predict(test_data)
+    dev_predictions = trainer.predict(dev_data)
+    test_predictions = trainer.predict(test_data)
 
     # generate probabilities over classes and save the test data with predictions as a dataframe into split directory
-    test_csv['predictions'] = F.softmax(torch.tensor(prediction_output.predictions), dim=-1).tolist()
-    test_csv.to_csv(f'{str(split_dir)}/test_df_with_predictions.csv', index=False, sep="\t")
+    dev_data.dataset['predictions'] = F.softmax(torch.tensor(dev_predictions.predictions), dim=-1).tolist()
+    dev_data.to_csv(f'{str(split_dir)}/dev_df_with_predictions.csv', index=False, sep="\t")
+    test_data.dataset['predictions'] = F.softmax(torch.tensor(test_predictions.predictions), dim=-1).tolist()
+    test_data.to_csv(f'{str(split_dir)}/test_df_with_predictions.csv', index=False, sep="\t")
     # save classification report for training,  validation and test set in split directory
-    pd.DataFrame.from_dict(train_report).to_csv(f'{str(split_dir)}/train_report.csv', index=False, sep="\t")
-    pd.DataFrame.from_dict(dev_report).to_csv(f'{str(split_dir)}/dev_report.csv', index=False, sep="\t")
-    pd.DataFrame.from_dict(test_report).to_csv(f'{str(split_dir)}/test_report.csv', index=False, sep="\t")
+
+    train_results["eval_report_csv"].to_csv(f'{str(split_dir)}/train_report.csv', index=False, sep="\t")
+    dev_results["eval_report_csv"].to_csv(f'{str(split_dir)}/dev_report.csv', index=False, sep="\t")
+    test_results["eval_report_csv"].to_csv(f'{str(split_dir)}/test_report.csv', index=False, sep="\t")
     training_args.output_dir = general_dir
 
     return dev_report, test_report
@@ -103,13 +103,15 @@ def compute_metrics(pred: EvalPrediction):
     preds = np.argmax(pred.predictions, axis=1).flatten()
     precision, recall, macro_f1, _ = precision_recall_fscore_support(y_true=labels, y_pred=preds, average='macro')
     accuracy = accuracy_score(y_true=labels, y_pred=preds)
-    report = classification_report(y_true=labels, y_pred=preds, output_dict=True)
+    report_dict = classification_report(y_true=labels, y_pred=preds, output_dict=True)
+    report_csv = classification_report(y_true=labels, y_pred=preds)
     results = {
         'accuracy': accuracy,
         'macro_f1': macro_f1,
         'precision': precision,
         'recall': recall,
-        "report": report
+        "report_dict": report_dict,
+        "report_csv": report_csv
     }
     return results
 
@@ -175,12 +177,12 @@ if __name__ == '__main__':
         print(len(set(train.labels)))
         print(train.labels)
         dev_results, test_results = run_train_with_trainer(train_data=train,
-                                                           test_data=dev,
-                                                           dev_data=test,
+                                                           dev_data=dev,
+                                                           test_data=test,
                                                            data_args=data_args,
                                                            model_args=model_args,
                                                            training_args=training_args,
-                                                           fold_id=str(i), test_csv=test.dataset)
+                                                           fold_id=str(i))
         dev_reports.append(dev_results)
         test_reports.append(test_results)
     # get average results for the 5 splits
