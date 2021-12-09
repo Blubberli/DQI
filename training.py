@@ -183,8 +183,9 @@ if __name__ == '__main__':
     # get average results for the 5 splits
     average_dev = average_all(dev_reports)
     average_test = average_all(test_reports)
-    class_average_dev = average_class(dev_reports)
-    class_average_test = average_class(test_reports)
+    label_list = list(set(train.labels))
+    class_average_dev = average_class(dev_reports, label_list=label_list)
+    class_average_test = average_class(test_reports, label_list=label_list)
     # write them to file in the global dir
     with open(training_args.output_dir + "/average_dev.csv", "w") as f:
         f.write(average_dev)
