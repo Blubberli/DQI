@@ -6,7 +6,6 @@ def average_all(reports):
     s = "metric\tmean\tdeviation\n"
     metrics = ['accuracy', 'precision', 'recall', 'f1-score']
     for m in metrics:
-        print(m)
         if m == 'accuracy':
             all_vals = [report[m] for report in reports]
         else:

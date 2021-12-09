@@ -92,7 +92,7 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
     pd.DataFrame.from_dict(test_report).to_csv(f'{str(split_dir)}/test_report.csv', index=False, sep="\t")
     training_args.output_dir = general_dir
 
-    return dev_results, test_result
+    return dev_report, test_report
 
 
 def compute_metrics(pred: EvalPrediction):
