@@ -14,7 +14,9 @@ from data import EuropolisDataset, EuropolisDatasetFeats
 import pandas as pd
 import numpy as np
 from evaluation import average_all, average_class
+import os
 
+os.environ["WANDB_START_METHOD"] = "thread"
 # set seed to 42 for reproducibility
 set_seed(42)
 
