@@ -169,6 +169,8 @@ if __name__ == '__main__':
     test_reports = []
     for i in range(0, 5):
         train, dev, test = get_datasets(use_feats=model_args.use_feats, data_args=data_args, i=i)
+        print(len(set(train.labels)))
+        print(train.labels)
         dev_results, test_results = run_train_with_trainer(train_data=train,
                                                            test_data=dev,
                                                            dev_data=test,
