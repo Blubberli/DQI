@@ -65,10 +65,7 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
         compute_metrics=compute_metrics,
         callbacks=[wandb_callback, early_stopping_callback]
     )
-    train_results = trainer.evaluate(train_data)
-    print(type(train_results))
-    with open(f'{str(split_dir)}/train_report.csv', "w") as f:
-        f.write(train_results["eval_report_csv"])
+
     # train with trainer
     trainer.train()
 
@@ -92,12 +89,13 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
     test_data.dataset['predictions'] = F.softmax(torch.tensor(test_predictions.predictions), dim=-1).tolist()
     test_data.dataset.to_csv(f'{str(split_dir)}/test_df_with_predictions.csv', index=False, sep="\t")
     # save classification report for training,  validation and test set in split directory
-
     with open(f'{str(split_dir)}/train_report.csv', "w") as f:
         f.write(train_results["eval_report_csv"])
-    train_results["eval_report_csv"].to_csv(f'{str(split_dir)}/train_report.csv', index=False, sep="\t")
-    dev_results["eval_report_csv"].to_csv(f'{str(split_dir)}/dev_report.csv', index=False, sep="\t")
-    test_results["eval_report_csv"].to_csv(f'{str(split_dir)}/test_report.csv', index=False, sep="\t")
+    with open(f'{str(split_dir)}/dev_report.csv', "w") as f:
+        f.write(dev_results["eval_report_csv"])
+    with open(f'{str(split_dir)}/test_report.csv', "w") as f:
+        f.write(test_results["eval_report_csv"])
+
     training_args.output_dir = general_dir
 
     return dev_report, test_report
