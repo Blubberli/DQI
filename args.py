@@ -29,6 +29,15 @@ class DataTrainingArguments:
             "help": "The quality dimension that should be predicted."
         }
     )
+
+    task1: Optional[str] = field(
+                                 metadata={"help": "the column which stores the quality dim of the first task"})
+    task2: Optional[str] = field(
+                                 metadata={"help": "the column which stores the quality dim of the second task"})
+    task3: Optional[str] = field(
+                                 metadata={"help": "the column which stores the quality dim of the second task"})
+    task4: Optional[str] = field(
+                                 metadata={"help": "the column which stores the quality dim of the second task"})
     text_col: Optional[str] = field(default="cleaned_comment", metadata={"help": "the column which stores the text"})
     data_dir: Optional[str] = field(
         default=str('5foldStratified/jlev')
@@ -58,6 +67,19 @@ class ModelArguments:
     labels_num: Optional[int] = field(
         default=2, metadata={"help": "number of labels in the model output"}
     )
+    task1_labels_num: Optional[int] = field(
+        default=4, metadata={"help": "number of labels in the model output of the first task"}
+    )
+    task2_labels_num: Optional[int] = field(
+        default=3, metadata={"help": "number of labels in the model output of the second task"}
+    )
+    task3_labels_num: Optional[int] = field(
+        default=4, metadata={"help": "number of labels in the model output of the third task"}
+    )
+    task4_labels_num: Optional[int] = field(
+        default=3, metadata={"help": "number of labels in the model output of the fourth task"}
+    )
+
 
 
 @dataclass
