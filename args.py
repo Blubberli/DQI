@@ -29,10 +29,6 @@ class DataTrainingArguments:
             "help": "The quality dimension that should be predicted."
         }
     )
-    text_col: Optional[str] = field(default="cleaned_comment", metadata={"help": "the column which stores the text"})
-    data_dir: Optional[str] = field(
-        default=str('5foldStratified/jlev')
-    )
 
     task1: Optional[QualityDimension] = field(
                                  metadata={"help": "the column which stores the quality dim of the first task"})
@@ -42,6 +38,10 @@ class DataTrainingArguments:
                                  metadata={"help": "the column which stores the quality dim of the second task"})
     task4: Optional[QualityDimension] = field(
                                  metadata={"help": "the column which stores the quality dim of the second task"})
+    text_col: Optional[str] = field(default="cleaned_comment", metadata={"help": "the column which stores the text"})
+    data_dir: Optional[str] = field(
+        default=str('5foldStratified/jlev')
+    )
 
     max_seq_length: Optional[int] = field(
         default=512,
