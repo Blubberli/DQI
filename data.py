@@ -138,11 +138,6 @@ class EuropolisMultiTaskDataset(Dataset):
         self.labels_task2 = self.dataset[label_task2].values
         self.labels_task3 = self.dataset[label_task3].values
         self.labels_task4 = self.dataset[label_task4].values
-        print(self.labels_task1)
-        print(self.labels_task2)
-        print(self.labels_task3)
-        print(self.labels_task4)
-
 
         self.text_col = text_col
         # drop all columns with no text

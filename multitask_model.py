@@ -55,11 +55,7 @@ class RobertaMultiTask(RobertaForSequenceClassification):
                     config.problem_type = "single_label_classification"
                 else:
                     config.problem_type = "multi_label_classification"
-            print("classification:")
-            print(config.problem_type)
-            print("number of task labels %d" % config.num_labels)
-            print("dtype of labels")
-            print(labels.dtype)
+
             if config.problem_type == "regression":
                 loss_fct = MSELoss()
                 if config.num_labels == 1:
@@ -67,10 +63,6 @@ class RobertaMultiTask(RobertaForSequenceClassification):
                 else:
                     loss = loss_fct(logits, labels)
             elif config.problem_type == "single_label_classification":
-                print("hier")
-                print(config.problem_type)
-                print(logits.view(-1, config.num_labels))
-                print(labels.view(-1))
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, config.num_labels), labels.view(-1))
             elif config.problem_type == "multi_label_classification":
@@ -129,8 +121,6 @@ class RobertaMultiTask(RobertaForSequenceClassification):
         all_losses = []
         configs = [self.config1, self.config2, self.config3, self.config4]
         for i in range(len(all_logits)):
-            print(all_labels[i].shape)
-            print(all_logits[i].shape)
             loss = self.get_loss(logits=all_logits[i], labels=all_labels[i], config=configs[i])
             print("loss for task %d" % i)
             all_losses.append(loss)
