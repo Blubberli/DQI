@@ -103,7 +103,8 @@ def run_train_with_trainer(train_data, dev_data, test_data, data_args, model_arg
 
 def compute_metrics(pred: EvalPrediction):
     labels = pred.label_ids
-    preds = np.argmax(pred.predictions, axis=1).flatten()
+    predictions_main_task = pred.predictions[0]
+    preds = np.argmax(predictions_main_task, axis=1).flatten()
     precision, recall, macro_f1, _ = precision_recall_fscore_support(y_true=labels, y_pred=preds, average='macro')
     accuracy = accuracy_score(y_true=labels, y_pred=preds)
     report_dict = classification_report(y_true=labels, y_pred=preds, output_dict=True)
