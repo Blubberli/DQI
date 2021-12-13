@@ -55,7 +55,11 @@ class RobertaMultiTask(RobertaForSequenceClassification):
                     config.problem_type = "single_label_classification"
                 else:
                     config.problem_type = "multi_label_classification"
-
+            print("classification:")
+            print(config.problem_type)
+            print("number of task labels %d" % config.num_labels)
+            print("dtype of labels")
+            print(labels.dtype)
             if config.problem_type == "regression":
                 loss_fct = MSELoss()
                 if config.num_labels == 1:
