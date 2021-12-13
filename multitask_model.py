@@ -122,7 +122,6 @@ class RobertaMultiTask(RobertaForSequenceClassification):
         configs = [self.config1, self.config2, self.config3, self.config4]
         for i in range(len(all_logits)):
             loss = self.get_loss(logits=all_logits[i], labels=all_labels[i], config=configs[i])
-            print("loss for task %d" % i)
             all_losses.append(loss)
         loss = sum(all_losses)
 
