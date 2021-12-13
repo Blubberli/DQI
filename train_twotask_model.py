@@ -10,7 +10,7 @@ from transformers.integrations import WandbCallback
 import torch.nn.functional as F
 from multitask_model import RobertaTwoTask
 from transformers import RobertaConfig, EarlyStoppingCallback
-from data import EuropolisMultiTaskDataset
+from data import EuropolisTwoTaskDataset
 import numpy as np
 from evaluation import average_all, average_class
 import os
@@ -128,17 +128,14 @@ def save_results(output_dir, report, filename):
 
 def get_datasets(data_args, i):
     # create a training, dev and test dataset
-    train = EuropolisMultiTaskDataset(path_to_dataset=data_args.data_dir + "/split%i/train.csv" % i,
-                                      label_task1=data_args.task1, label_task2=data_args.task2,
-                                      label_task3=data_args.task3, label_task4=data_args.task4, tokenizer=tokenizer,
+    train = EuropolisTwoTaskDataset(path_to_dataset=data_args.data_dir + "/split%i/train.csv" % i,
+                                      label_task1=data_args.task1, label_task2=data_args.task2, tokenizer=tokenizer,
                                       text_col=data_args.text_col)
-    dev = EuropolisMultiTaskDataset(path_to_dataset=data_args.data_dir + "/split%i/val.csv" % i,
-                                    label_task1=data_args.task1, label_task2=data_args.task2,
-                                    label_task3=data_args.task3, label_task4=data_args.task4, tokenizer=tokenizer,
+    dev = EuropolisTwoTaskDataset(path_to_dataset=data_args.data_dir + "/split%i/val.csv" % i,
+                                    label_task1=data_args.task1, label_task2=data_args.task2, tokenizer=tokenizer,
                                     text_col=data_args.text_col)
-    test = EuropolisMultiTaskDataset(path_to_dataset=data_args.data_dir + "/split%i/test.csv" % i,
-                                     label_task1=data_args.task1, label_task2=data_args.task2,
-                                     label_task3=data_args.task3, label_task4=data_args.task4, tokenizer=tokenizer,
+    test = EuropolisTwoTaskDataset(path_to_dataset=data_args.data_dir + "/split%i/test.csv" % i,
+                                     label_task1=data_args.task1, label_task2=data_args.task2, tokenizer=tokenizer,
                                      text_col=data_args.text_col)
 
     return train, dev, test
