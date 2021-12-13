@@ -30,13 +30,13 @@ class DataTrainingArguments:
         }
     )
 
-    task1: Optional[QualityDimension] = field(
+    task1: Optional[str] = field(
                                  metadata={"help": "the column which stores the quality dim of the first task"})
-    task2: Optional[QualityDimension] = field(
+    task2: Optional[str] = field(
                                  metadata={"help": "the column which stores the quality dim of the second task"})
-    task3: Optional[QualityDimension] = field(
+    task3: Optional[str] = field(
                                  metadata={"help": "the column which stores the quality dim of the second task"})
-    task4: Optional[QualityDimension] = field(
+    task4: Optional[str] = field(
                                  metadata={"help": "the column which stores the quality dim of the second task"})
     text_col: Optional[str] = field(default="cleaned_comment", metadata={"help": "the column which stores the text"})
     data_dir: Optional[str] = field(
