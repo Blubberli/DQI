@@ -34,13 +34,13 @@ class DataTrainingArguments:
         default=str('5foldStratified/jlev')
     )
 
-    task1: Optional[str] = field(default="jlev",
+    task1: Optional[QualityDimension] = field(default="jlev",
                                  metadata={"help": "the column which stores the quality dim of the first task"})
-    task2: Optional[str] = field(default="jcon",
+    task2: Optional[QualityDimension] = field(default="jcon",
                                  metadata={"help": "the column which stores the quality dim of the second task"})
-    task3: Optional[str] = field(default="int1",
+    task3: Optional[QualityDimension] = field(default="int1",
                                  metadata={"help": "the column which stores the quality dim of the second task"})
-    task4: Optional[str] = field(default="resp_gr",
+    task4: Optional[QualityDimension] = field(default="resp_gr",
                                  metadata={"help": "the column which stores the quality dim of the second task"})
 
     max_seq_length: Optional[int] = field(
