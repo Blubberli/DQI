@@ -31,13 +31,13 @@ class DataTrainingArguments:
     )
 
     task1: Optional[str] = field(
-                                 metadata={"help": "the column which stores the quality dim of the first task"})
+                                 metadata={"help": "the column which stores the quality dim of the first task"}, default="jlev")
     task2: Optional[str] = field(
-                                 metadata={"help": "the column which stores the quality dim of the second task"})
+                                 metadata={"help": "the column which stores the quality dim of the second task"}, default="jcon")
     task3: Optional[str] = field(
-                                 metadata={"help": "the column which stores the quality dim of the second task"})
+                                 metadata={"help": "the column which stores the quality dim of the second task"}, default="int1")
     task4: Optional[str] = field(
-                                 metadata={"help": "the column which stores the quality dim of the second task"})
+                                 metadata={"help": "the column which stores the quality dim of the second task"}, default="resp_gr")
     text_col: Optional[str] = field(default="cleaned_comment", metadata={"help": "the column which stores the text"})
     data_dir: Optional[str] = field(
         default=str('5foldStratified/jlev')

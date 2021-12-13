@@ -20,7 +20,6 @@ def average_class(reports, label_list):
     label_list = [str(l) for l in label_list]
     for metric in reports[0]['0'].keys():
         for label in label_list:
-            print(label)
             all_vals = [report[label][metric] for report in reports]
             s += "%s\t%s\t%.2f\t%.2f\n" % (label, metric, statistics.mean(all_vals), statistics.stdev(all_vals))
     return s
