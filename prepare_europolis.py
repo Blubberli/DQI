@@ -139,6 +139,55 @@ def create_stratified_split(quality_dim, output_dir):
             len(train_set) / len(data), len(val_set) / len(data), len(test_set) / len(data)))
 
 
+def check_respect():
+    path = "/Users/johannesfalk/PycharmProjects/DQIReReloaded/data/5foldStratified/resp_gr"
+    for i in range(0, 5):
+        train = pd.read_csv(path + "/split%d/train.csv" % i, sep="\t")
+        val = pd.read_csv(path + "/split%d/val.csv" % i, sep="\t")
+        test = pd.read_csv(path + "/split%d/test.csv" % i, sep="\t")
+        print(train["resp_gr"].values)
+
+        labels = train["resp_gr"].values
+        labels = [int(l) for l in labels]
+        train["resp_gr"] = labels
+        labels = val["resp_gr"].values
+        labels = [int(l) for l in labels]
+        val["resp_gr"] = labels
+        labels = test["resp_gr"].values
+        labels = [int(l) for l in labels]
+        test["resp_gr"] = labels
+        # train.to_csv(path + "/split%d/train.csv" %i, sep="\t", index=False)
+        # val.to_csv(path + "/split%d/val.csv" %i, sep="\t", index=False)
+        # test.to_csv(path + "/split%d/test.csv" %i, sep="\t", index=False)
+
+
+def create_5fold_features():
+    data = pd.read_csv("/Users/johannesfalk/PycharmProjects/DQIReReloaded/data/europolis_with_features.csv", sep="\t")
+    dimensions = ["jlev", "jcon", "resp_gr", "int1"]
+    dropped = False
+    print(data.columns)
+    for dim in dimensions:
+        path = "data/5foldStratified/%s" % dim
+        new_path = "data/5foldWithFeatures/%s" % dim
+        for i in range(0, 5):
+            train = pd.read_csv(path + "/split%d/train.csv" % i, sep="\t")
+            val = pd.read_csv(path + "/split%d/val.csv" % i, sep="\t")
+            test = pd.read_csv(path + "/split%d/test.csv" % i, sep="\t")
+            if not dropped:
+                to_drop = [el for el in train.columns if el != "ID"]
+                data = data.drop(columns=to_drop)
+                dropped = True
+
+            train = pd.merge(train, data, on="ID")
+            val = pd.merge(val, data, on="ID")
+            test = pd.merge(test, data, on="ID")
+            train.to_csv(new_path + "/split%d/train.csv" % i, sep="\t", index=False)
+            val.to_csv(new_path + "/split%d/val.csv" % i, sep="\t", index=False)
+            test.to_csv(new_path + "/split%d/test.csv" % i, sep="\t", index=False)
+
+
 if __name__ == '__main__':
     # plot_class_distributions()
-    create_stratified_split("resp_gr", "data/5foldStratified/resp_gr")
+    #create_stratified_split("jlev", "data/5foldStratified/jlev")
+    # check_respect()
+    create_5fold_features()
