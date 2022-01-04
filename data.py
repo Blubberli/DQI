@@ -9,7 +9,7 @@ class EuropolisDatasetFeats(Dataset):
     A Europolis Dataset. Takes a pandas dataframe and loads the features, labels and encodings given the tokenizer
     """
 
-    def __init__(self, path_to_dataset, label, tokenizer, text_col):
+    def __init__(self, path_to_dataset, label, tokenizer, text_col, feat_cols):
         """
 
         :param path_to_dataset: the path to the dataframe, e.g. to the validation data
@@ -26,7 +26,7 @@ class EuropolisDatasetFeats(Dataset):
         self.encodings = tokenizer(list(self.dataset[self.text_col]), return_tensors='pt', padding=True,
                                    truncation=True)
 
-        self.num_cols = ["cogency", "effectiveness", "reasonableness", "overall"]
+        self.num_cols = ["cogency_human", "effectiveness_human", "reasonableness_human", "overall_human"]
         self.feature_vectors = self.get_numerical_feats()
 
     def get_numerical_feats(self):
@@ -94,6 +94,42 @@ class EuropolisSimpleDataset(Dataset):
         # drop all columns with no text
         self.dataset = self.dataset[self.dataset[self.text_col].notna()]
         self.num_cols = ["cogency", "effectiveness", "reasonableness", "overall"]
+        self.feature_vectors = self.get_numerical_feats()
+
+    def get_numerical_feats(self):
+        # get a torch tensor of the argument quality scores
+        return np.array(self.dataset[self.num_cols].values.astype('float'))
+
+    def __getitem__(self, idx):
+        item = {}
+        item['text'] = self.texts[idx]
+        item['features'] = self.feature_vectors[idx]
+        item['labels'] = self.labels[idx]
+        return item
+
+    def __len__(self):
+        return len(self.labels)
+
+class EuropolisHumanAQ(Dataset):
+    """
+    A Europolis Dataset. Takes a pandas dataframe and loads the features, labels and encodings given the tokenizer
+    """
+
+    def __init__(self, path_to_dataset, label, text_col):
+        """
+
+        :param path_to_dataset: the path to the dataframe, e.g. to the validation data
+        :param label: the quality dimension to be predicted
+        :param tokenizer: a tokenizer object (e.g. RobertaTokenizer) that has a default for creating encodings for text
+        :param text_col: the column name that stores the actual text
+        """
+        self.dataset = pd.read_csv(path_to_dataset, sep="\t")
+        self.labels = self.dataset[label].values
+        self.text_col = text_col
+        self.texts = self.dataset[text_col].values
+        # drop all columns with no text
+        self.dataset = self.dataset[self.dataset[self.text_col].notna()]
+        self.num_cols = ["cogency_human", "effectiveness_human", "reasonableness_human", "overall_human"]
         self.feature_vectors = self.get_numerical_feats()
 
     def get_numerical_feats(self):
@@ -216,13 +252,14 @@ class EuropolisFeatureDataset(Dataset):
         :param text_col: the column name that stores the actual text
         """
         self.dataset = pd.read_csv(path_to_dataset, sep="\t")
-        self.dataset = self.dataset.drop(columns=["filename_x", "filename_y"])
+        if "filename_x" in self.dataset.columns:
+            self.dataset = self.dataset.drop(columns=["filename_x", "filename_y"])
         self.labels = self.dataset[label].values
         self.text_col = text_col
         self.texts = self.dataset[text_col].values
         # drop all columns with no text
         self.dataset = self.dataset[self.dataset[self.text_col].notna()]
-        self.num_cols = self.dataset.columns[29:]
+        self.num_cols = self.dataset.columns[29:803]
         self.feature_vectors = self.get_numerical_feats()
 
     def get_numerical_feats(self):
