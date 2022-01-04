@@ -9,7 +9,7 @@ class EuropolisDatasetFeats(Dataset):
     A Europolis Dataset. Takes a pandas dataframe and loads the features, labels and encodings given the tokenizer
     """
 
-    def __init__(self, path_to_dataset, label, tokenizer, text_col, feat_cols):
+    def __init__(self, path_to_dataset, label, tokenizer, text_col):
         """
 
         :param path_to_dataset: the path to the dataframe, e.g. to the validation data
