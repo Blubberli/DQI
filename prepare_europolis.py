@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, StratifiedKFold
 import random
+from preprocessing import clean_comment
 
 random.seed(41)
 # merge the classes and give them meaningful names(?)
@@ -52,8 +53,8 @@ text2new_label = {
     "jcon": {
         'own country': 0,
         'no reference': 1,
-        'reference to common good (EU)': 2,
-        'reference to common good (solidarty)': 2
+        'common good': 2,
+        'common good': 2
 
     },
     "resp_gr": {
@@ -86,7 +87,6 @@ def create_europolis_with_merged_labels():
                        sep="\t")
     data["post_length"] = [len(comment.split(" ")) for comment in data["cleaned_comment"].values]
     data = data[data.post_length >= 15]
-    print(len(data))
     data = data.rename(columns={"label": "jlev"})
     dimensions = ["jlev", "jcon", "resp_gr", "int1"]
     new_label_cols = []
@@ -103,15 +103,75 @@ def create_europolis_with_merged_labels():
     data.to_csv("data/europolis_newDQI.csv", index=False, sep="\t")
 
 
+def fix_AQ_scores():
+    """align AQ scores on text comment and create a new ID column that is really unique"""
+    aq_scores_for_all = pd.read_csv(
+        "/Users/falkne/PycharmProjects/dqi_predictor/10_splits_justification/split0/whole.csv", sep="\t")
+    my_data = pd.read_csv("/Users/falkne/PycharmProjects/DQI/data/europolis_newDQI.csv", sep="\t")
+    print(len(aq_scores_for_all))
+    print(len(my_data))
+    print(aq_scores_for_all.columns)
+    cogency = []
+    reasonable = []
+    effect = []
+    all = []
+    multilin = []
+    for i in range(len(my_data)):
+        comment = my_data.cleaned_comment.values[i]
+        orig_comment = my_data.speech.values[i]
+        multilin.append(clean_comment(orig_comment))
+        target = aq_scores_for_all[aq_scores_for_all.cleaned_comment == comment]
+        cogency.append(target.cogency.values[0])
+        reasonable.append(target.reasonableness.values[0])
+        effect.append(target.effectiveness.values[0])
+        all.append(target.overall.values[0])
+
+    my_data["ID"] = list(range(len(my_data)))
+    my_data["multilingual_comment"] = multilin
+    my_data["cogency"] = cogency
+    my_data["effectiveness"] = effect
+    my_data["reasonableness"] = reasonable
+    my_data["overall"] = all
+
+    print(my_data.columns)
+    print(len(list(my_data['ID'])))
+    print(len(set(list(my_data['ID']))))
+    my_data.to_csv("/Users/falkne/PycharmProjects/DQI/data/europolis_newDQI.csv", sep="\t", index=False)
+
+
 def plot_class_distributions():
     """Read the whole dataset and plot label distribution for each quality dimension"""
     data = pd.read_csv("data/europolis_newDQI.csv", sep="\t")
     dimensions = ["jlev", "jcon", "resp_gr", "int1"]
     for dim in dimensions:
         counts = pd.crosstab(index=data[dim], columns='count')
+        print(counts)
+        #counts.plot.bar()
+        #plt.savefig(
+        #    "data/plots/original_class_distribution/%s.png" % dim)
+
+
+def plot_class_distribution_split(split_number, input_dir, output_dir):
+    dimensions = ["jlev", "jcon", "resp_gr", "int1"]
+    for dim in dimensions:
+        training_data = pd.read_csv("%s/%s/split%d/train.csv" % (input_dir, dim, split_number), sep="\t")
+        print(len(training_data))
+        dev_data = pd.read_csv("%s/%s/split%d/val.csv" % (input_dir, dim, split_number), sep="\t")
+        test_data = pd.read_csv("%s/%s/split%d/test.csv" % (input_dir, dim, split_number), sep="\t")
+        counts = pd.crosstab(index=training_data[dim], columns='count')
+        print(dim)
+        print(counts)
         counts.plot.bar()
         plt.savefig(
-            "/Users/johannesfalk/PycharmProjects/DQIReReloaded/plots/original_class_distribution/%s.png" % dim)
+            "%s/%s_train.png" % (output_dir, dim))
+        counts = pd.crosstab(index=dev_data[dim], columns='count')
+        counts.plot.bar()
+        plt.savefig(
+            "%s/%s_val.png" % (output_dir, dim))
+        counts = pd.crosstab(index=test_data[dim], columns='count')
+        counts.plot.bar()
+        plt.savefig(
+            "%s/%s_test.png" % (output_dir, dim))
 
 
 def create_stratified_split(quality_dim, output_dir):
@@ -119,6 +179,7 @@ def create_stratified_split(quality_dim, output_dir):
     data = pd.read_csv("data/europolis_newDQI.csv", sep="\t")
     # drop where label is None
     data = data[data[quality_dim].notna()]
+
     kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
     counter = 0
@@ -139,55 +200,170 @@ def create_stratified_split(quality_dim, output_dir):
             len(train_set) / len(data), len(val_set) / len(data), len(test_set) / len(data)))
 
 
-def check_respect():
-    path = "/Users/johannesfalk/PycharmProjects/DQIReReloaded/data/5foldStratified/resp_gr"
+def check_no_overlap_train_test(quality_dim):
+    input_dir = "data/5foldStratified/%s" % quality_dim
     for i in range(0, 5):
-        train = pd.read_csv(path + "/split%d/train.csv" % i, sep="\t")
-        val = pd.read_csv(path + "/split%d/val.csv" % i, sep="\t")
-        test = pd.read_csv(path + "/split%d/test.csv" % i, sep="\t")
-        print(train["resp_gr"].values)
-
-        labels = train["resp_gr"].values
-        labels = [int(l) for l in labels]
-        train["resp_gr"] = labels
-        labels = val["resp_gr"].values
-        labels = [int(l) for l in labels]
-        val["resp_gr"] = labels
-        labels = test["resp_gr"].values
-        labels = [int(l) for l in labels]
-        test["resp_gr"] = labels
-        # train.to_csv(path + "/split%d/train.csv" %i, sep="\t", index=False)
-        # val.to_csv(path + "/split%d/val.csv" %i, sep="\t", index=False)
-        # test.to_csv(path + "/split%d/test.csv" %i, sep="\t", index=False)
+        training_data = pd.read_csv("%s/split%d/train.csv" % (input_dir, i), sep="\t")
+        test_data = pd.read_csv("%s/split%d/test.csv" % (input_dir, i), sep="\t")
+        val_data = pd.read_csv("%s/split%d/val.csv" % (input_dir, i), sep="\t")
+        print(set(training_data.ID).intersection(test_data.ID))
+        print(set(training_data.ID).intersection(val_data.ID))
+        print(set(training_data.cleaned_comment).intersection(test_data.cleaned_comment))
+        print(set(training_data.cleaned_comment).intersection(val_data.cleaned_comment))
 
 
-def create_5fold_features():
-    data = pd.read_csv("/Users/johannesfalk/PycharmProjects/DQIReReloaded/data/europolis_with_features.csv", sep="\t")
-    dimensions = ["jlev", "jcon", "resp_gr", "int1"]
+def create_augmented_training_data(input_dir, quality_dim, output_dir):
+    augmented_data = pd.read_csv("/Users/falkne/PycharmProjects/DQI/data/europolis_augmented.csv", sep="\t",
+                                 header=None, names=["ID", "cleaned_comment"])
+    input_dir = "%s/%s" % (input_dir, quality_dim)
+    for i in range(0, 5):
+        training_data = pd.read_csv("%s/split%d/train.csv" % (input_dir, i), sep="\t")
+        # copy the training data and remove the original text column
+        training_data_copy = training_data.copy()
+        training_data_copy.drop(columns=['cleaned_comment'], inplace=True)
+        # read test and dev
+        test_data = pd.read_csv("%s/split%d/test.csv" % (input_dir, i), sep="\t")
+        val_data = pd.read_csv("%s/split%d/val.csv" % (input_dir, i), sep="\t")
+
+        # extract all possible target comments (based on what ID we have in the training data)
+        available_data = augmented_data[augmented_data.ID.isin(training_data.ID)]
+        # extract all other column values based on the original comment (from training data, based on ID)
+        target_augmented = pd.merge(available_data, training_data_copy, on="ID")
+        # add a column that indicates whether the comment was augmented or not
+        target_augmented["augmented"] = [True] * len(target_augmented)
+        training_data["augmented"] = [False] * len(training_data)
+        training_dist = pd.crosstab(index=training_data[quality_dim], columns='count').to_dict()["count"]
+        augmented_dist = pd.crosstab(index=target_augmented[quality_dim], columns='count').to_dict()["count"]
+        # 1) if possible sample from lower frequency classes such that they match the most frequent class
+        highest_existing_val = max(training_dist.values())
+        print("largest training freq is %d" % highest_existing_val)
+        print("smallest augmented freq is %d" % min(augmented_dist.values()))
+        sampled_augmented_data = []
+        # if frequencies in the augmented data are lower than the training freq of most frequent class, upsample lower_freq classes as much as possible
+        if min(augmented_dist.values()) < highest_existing_val:
+            for label, frequency in augmented_dist.items():
+                if frequency < highest_existing_val:
+                    sample = target_augmented[target_augmented[quality_dim] == label]
+                else:
+                    nr_additional_comments = highest_existing_val - training_dist[label]
+                    sample = target_augmented[target_augmented[quality_dim] == label].sample(nr_additional_comments,
+                                                                                             ignore_index=True)
+                sampled_augmented_data.append(sample)
+            augmented_all = pd.concat(sampled_augmented_data)
+        # balance class frequencies first
+        else:
+            for label, frequency in augmented_dist.items():
+                nr_additional_comments = highest_existing_val - training_dist[label]
+                sample = target_augmented[target_augmented[quality_dim] == label].sample(nr_additional_comments,
+                                                                                         ignore_index=True)
+                sampled_augmented_data.append(sample)
+            # now all classes should have the same frequency
+            sampled_augmented_data_all = pd.concat(sampled_augmented_data)
+            # remove the data that is already in the sample
+            target_augmented = target_augmented[
+                ~target_augmented['cleaned_comment'].isin(sampled_augmented_data_all['cleaned_comment'])]
+            # add as much more data as possible to keep classes balanced
+            # class frequency in the left augmented
+            leftover_augmented_freqs = pd.crosstab(index=target_augmented[quality_dim], columns='count').to_dict()[
+                "count"]
+            # the current augmented data should be balanced now
+            current_class_freq = pd.crosstab(index=pd.concat([sampled_augmented_data_all, training_data])[quality_dim],
+                                             columns='count').to_dict()["count"]
+            # take the minimum leftover samples and add them
+            smallest_possible_val = min(leftover_augmented_freqs.values())
+            new_samples = []
+            for label, frequency in leftover_augmented_freqs.items():
+                sample = target_augmented[target_augmented[quality_dim] == label].sample(smallest_possible_val,
+                                                                                         ignore_index=True)
+                new_samples.append(sample)
+            sampled_augmented_data_all2 = pd.concat(new_samples)
+            augmented_all = pd.concat([sampled_augmented_data_all, sampled_augmented_data_all2])
+        augmented_training_data = pd.concat([training_data, augmented_all])
+        augmented_training_data.to_csv("%s/%s/split%d/train.csv" % (output_dir, quality_dim, i), sep="\t", index=False)
+        print(pd.crosstab(index=augmented_training_data[quality_dim], columns='count').to_dict()["count"])
+        val_data.to_csv("%s/%s/split%d/val.csv" % (output_dir, quality_dim, i), sep="\t", index=False)
+        test_data.to_csv("%s/%s/split%d/test.csv" % (output_dir, quality_dim, i), sep="\t", index=False)
+
+
+def create_comment_text_files():
+    data = pd.read_csv("/Users/falkne/PycharmProjects/DQI/data/europolis_newDQI.csv", sep="\t")
+    for i in range(len(data)):
+        comment = data["cleaned_comment"].values[i]
+        ID = data["ID"].values[i]
+        with open("data/europolis_base_textfiles/%d.txt" % ID, "w") as f:
+            f.write(comment)
+
+
+def merge_features():
+    data = pd.read_csv("/Users/falkne/PycharmProjects/DQI/data/europolis_newDQI.csv", sep="\t")
+    sentiment = pd.read_csv("/Users/falkne/PycharmProjects/DQI/data/europolis_sentiment.csv")
+    taaled = pd.read_csv("/Users/falkne/PycharmProjects/DQI/data/taaled.csv")
+    taales = pd.read_csv("/Users/falkne/PycharmProjects/DQI/data/taales.csv")
+    taales["ID"] = [int(el.replace(".txt", "")) for el in taales.Filename.values]
+    data_with_taales = pd.merge(data, taales, on="ID")
+    sentiment["ID"] = [int(el.replace(".txt", "")) for el in sentiment.filename.values]
+    data_with_sentiment = pd.merge(data_with_taales, sentiment, on="ID")
+    taaled["ID"] = [int(el.replace(".txt", "")) for el in taaled.filename.values]
+    data_with_all = pd.merge(data_with_sentiment, taaled, on="ID")
+    data_with_all.to_csv("data/europolis_with_features.csv", index=False, sep="\t")
+    print(data_with_all.columns)
+
+
+def create_features_splits():
+    dims = ["jlev", "jcon", "int1", "resp_gr"]
+    europolis_with_feats = pd.read_csv("/Users/falkne/PycharmProjects/DQI/data/europolis_with_features.csv", sep="\t")
     dropped = False
-    print(data.columns)
-    for dim in dimensions:
-        path = "data/5foldStratified/%s" % dim
-        new_path = "data/5foldWithFeatures/%s" % dim
+    oldpath = "/Users/falkne/PycharmProjects/DQI/data/5foldStratified"
+    newpath = "/Users/falkne/PycharmProjects/DQI/data/5foldFeatures"
+    for dim in dims:
         for i in range(0, 5):
-            train = pd.read_csv(path + "/split%d/train.csv" % i, sep="\t")
-            val = pd.read_csv(path + "/split%d/val.csv" % i, sep="\t")
-            test = pd.read_csv(path + "/split%d/test.csv" % i, sep="\t")
-            if not dropped:
-                to_drop = [el for el in train.columns if el != "ID"]
-                data = data.drop(columns=to_drop)
-                dropped = True
 
-            train = pd.merge(train, data, on="ID")
-            val = pd.merge(val, data, on="ID")
-            test = pd.merge(test, data, on="ID")
-            train.to_csv(new_path + "/split%d/train.csv" % i, sep="\t", index=False)
-            val.to_csv(new_path + "/split%d/val.csv" % i, sep="\t", index=False)
-            test.to_csv(new_path + "/split%d/test.csv" % i, sep="\t", index=False)
+            train = pd.read_csv("%s/%s/split%d/train.csv" % (oldpath, dim, i), sep="\t")
+            val = pd.read_csv("%s/%s/split%d/val.csv" % (oldpath, dim, i), sep="\t")
+            test = pd.read_csv("%s/%s/split%d/test.csv" % (oldpath, dim, i), sep="\t")
+            if not dropped:
+                print(dropped)
+                to_be_dropped = train.columns
+                to_be_dropped = [el for el in to_be_dropped if el != "ID" and el in europolis_with_feats.columns]
+                print(europolis_with_feats.columns)
+                europolis_with_feats = europolis_with_feats.drop(columns=to_be_dropped)
+                dropped = True
+            train = pd.merge(train, europolis_with_feats, on="ID")
+            val = pd.merge(val, europolis_with_feats, on="ID")
+            test = pd.merge(test, europolis_with_feats, on="ID")
+            train.to_csv("%s/%s/split%d/train.csv" % (newpath, dim, i), index=False, sep="\t")
+            val.to_csv("%s/%s/split%d/val.csv" % (newpath, dim, i), index=False, sep="\t")
+            test.to_csv("%s/%s/split%d/test.csv" % (newpath, dim, i), index=False, sep="\t")
+
+def get_dataset_sizes(path, dim):
+    lengths = []
+    val_lengths = []
+    test_length = []
+    for i in range(0, 5):
+        training = pd.read_csv("%s/%s/split%d/train.csv" %(path, dim, i), sep="\t")
+        val = pd.read_csv("%s/%s/split%d/val.csv" %(path, dim, i), sep="\t")
+        test = pd.read_csv("%s/%s/split%d/test.csv" %(path, dim, i), sep="\t")
+        val_lengths.append(len(val))
+        test_length.append(len(test))
+        lengths.append(len(training))
+    import numpy as np
+    print("length for %s : %d" % (dim, np.average(np.array(lengths))))
+    print("length for val : %d" % (np.average(np.array(val_lengths))))
+    print("length for test : %d" % (np.average(np.array(test_length))))
 
 
 if __name__ == '__main__':
-    # plot_class_distributions()
-    #create_stratified_split("jlev", "data/5foldStratified/jlev")
-    # check_respect()
-    create_5fold_features()
+    # fix_AQ_scores()
+    # plot_class_distribution_split(split_number=0, output_dir="data/plots/augmented_small/split0", input_dir="data/5foldAugmentedEDA/large")
+    # create_augmented_training_data(input_dir="data/5foldStratified", quality_dim="jlev",
+    #                               output_dir="data/5foldAugmentedEDA/large", augmentation_method="large")
+    # check_no_overlap_train_test("jlev")
+    #create_features_splits()
+    #path = "/Users/falkne/PycharmProjects/DQI/data/5foldStratified"
+    #dim = "jlev"
+    path = "/Users/falkne/PycharmProjects/DQI/data/withHumanAQ/augmented"
+    get_dataset_sizes(path, "jlev")
+    get_dataset_sizes(path, "jcon")
+    get_dataset_sizes(path, "int1")
+    get_dataset_sizes(path, "resp_gr")
+    #plot_class_distributions()

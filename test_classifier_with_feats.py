@@ -39,6 +39,8 @@ class TestFeatureModels(unittest.TestCase):
                                            tokenizer=self.tokenizer, label='jcon', text_col='cleaned_comment')
         self.dev_data = EuropolisDataset(path_to_dataset="data/5foldStratified/jcon/split0/val.csv",
                                          tokenizer=self.tokenizer, label='jcon', text_col='cleaned_comment')
+        self.test_data = EuropolisDataset(path_to_dataset="data/5foldStratified/resp_gr/split2/test.csv",
+                                         tokenizer=self.tokenizer, label='resp_gr', text_col='cleaned_comment')
 
     def test_forward(self):
         """
@@ -76,3 +78,14 @@ class TestFeatureModels(unittest.TestCase):
             eval_dataset=self.dev_data)
         result = trainer.predict(self.dev_data)
         print(result)
+
+    def test_respect(self):
+        import pandas as pd
+        for i in range(2, 3):
+            test = pd.read_csv("data/5foldStratified/resp_gr/split%d/test.csv" % i, sep="\t")
+            print(len(test["resp_gr"]), len(test), len(test["cleaned_comment"]))
+            print(test.isnull().values.any())
+            print(test.columns[test.isna().any()].tolist())
+        print(len(self.test_data))
+        print(len(self.test_data.labels))
+        print(len(self.test_data.dataset))
