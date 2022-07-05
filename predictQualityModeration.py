@@ -105,9 +105,10 @@ def transform_qual_score(x):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, filename="logfile", filemode="a+",
                         format="%(asctime)-15s %(levelname)-8s %(message)s")
-    data = pd.read_csv(
-        "/Users/falkne/PycharmProjects/argQuality_adapters/data/paralellInferenceResults/5/regroom.tsv",
-        sep="\t")
+    #data = pd.read_csv(
+    #    "/Users/falkne/PycharmProjects/argQuality_adapters/data/paralellInferenceResults/5/regroom.tsv",
+    #    sep="\t")
+    data = pd.read_csv("/mount/arbeitsdaten/tcl/Users/falk/DQI/data/regroom.tsv", sep="\t")
     print(data.columns)
     dataforgeneral = data.drop("MODFORQUAL", axis=1)
 
@@ -137,11 +138,14 @@ if __name__ == '__main__':
         test_x = scaler.transform(test_x)
 
         train_y, test_y = train["MODINTERVENTION"], test["MODINTERVENTION"]
-        """"
+        logging.info("###XGBOOST###")
+
         report = xg_boost(train_x=train_x, test_x=test_x, train_y=train_y, test_y=test_y)
         total_scores["xgboost"]["f1_macro"].append(report["macro avg"]["f1-score"])
         total_scores["xgboost"]["f1_positive"].append(report["1"]["f1-score"])
-        """
+        logging.info("F1 macro on split %d: %s" % (counter, report["macro avg"]["f1-score"]))
+        logging.info("F1 positive on split %d: %s" % (counter, report["1"]["f1-score"]))
+
         logging.info("###SVM###")
         report = svm(train_x=train_x, test_x=test_x, train_y=train_y, test_y=test_y)
 
@@ -158,7 +162,7 @@ if __name__ == '__main__':
 
         logging.info("F1 macro on split %d: %s" % (counter, report["macro avg"]["f1-score"]))
         logging.info("F1 positive on split %d: %s" % (counter, report["1"]["f1-score"]))
-        counter+=1
+        counter += 1
 
     logging.info("----------------")
     logging.info("XGBOOST\naverage f1 : %.2f\naverage positive F1 :%.2f" % (
@@ -186,11 +190,14 @@ if __name__ == '__main__':
         test_x = scaler.transform(test_x)
 
         train_y, test_y = train["MODFORQUAL"], test["MODFORQUAL"]
-        """
+        logging.info("###XGBOOST###")
+
         report = xg_boost(train_x=train_x, test_x=test_x, train_y=train_y, test_y=test_y)
         total_scores["xgboost"]["f1_macro"].append(report["macro avg"]["f1-score"])
         total_scores["xgboost"]["f1_positive"].append(report["1"]["f1-score"])
-        """
+        logging.info("F1 macro on split %d: %s" % (counter, report["macro avg"]["f1-score"]))
+        logging.info("F1 positive on split %d: %s" % (counter, report["1"]["f1-score"]))
+
         logging.info("###SVM###")
 
         report = svm(train_x=train_x, test_x=test_x, train_y=train_y, test_y=test_y)
@@ -222,4 +229,3 @@ if __name__ == '__main__':
         np.average(np.array(total_scores["logisticRegression"]["f1_macro"])),
         np.average(np.array(total_scores["logisticRegression"]["f1_positive"]))))
     counter += 1
-
